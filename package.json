@@ -1,0 +1,12 @@
+{
+  "name": "openwebui-edge-chrome-extension",
+  "version": "3.0.1",
+  "private": true,
+  "description": "Standalone browser side panel for Ollama and Open WebUI",
+  "license": "MIT",
+  "scripts": {
+    "test": "node test/core.test.mjs && node test/page-actions.test.mjs && node test/distribution.test.mjs",
+    "package": "python3 scripts/package.py"
+  },
+  "engines": {"node": ">=20"}
+}

@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.DS_Store
+.env
+.env.*
+runtime-config.js
+edge-bridge.json
+*.pem
+*.key
+*.log
+backups/
+credentials*.json
+session*.json
