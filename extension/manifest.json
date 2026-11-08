@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Open WebUI Edge Bridge",
+  "description": "獨立的網頁對談助手；直接連 Ollama，或連 Open WebUI 同步來源與對談。網頁操作逐次核准，不需桌面 App。",
+  "version": "3.0.1",
+  "minimum_chrome_version": "120",
+  "permissions": [
+    "scripting",
+    "storage",
+    "activeTab",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "https://*/*",
+    "http://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Open WebUI：對談與研究網頁"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; connect-src http: https:; frame-src 'none'"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  }
+}
