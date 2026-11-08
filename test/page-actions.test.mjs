@@ -1,0 +1,26 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+import {webcrypto} from 'node:crypto';
+const source=fs.readFileSync(new URL('../extension/agent-page.js',import.meta.url),'utf8');
+let clicks=0, labels='儲存草稿';
+const listeners={};
+const button={tagName:'BUTTON',type:'button',isConnected:true,disabled:false,getClientRects:()=>[{}],getAttribute:k=>k==='aria-label'?labels:null,innerText:'',closest:()=>null,click:()=>clicks++};
+const password={...button,tagName:'INPUT',type:'password'};
+const input={...button,tagName:'INPUT',type:'text',name:'title',id:'title',getAttribute:k=>k==='aria-label'?'標題':null,matches:()=>true,focus(){},dispatchEvent(){},value:''};
+const inputProto={};Object.defineProperty(inputProto,'value',{set(v){this.value=v;}});
+const doc={title:'測試頁',body:{innerText:'可閱讀測試內容'},querySelector:()=>null,querySelectorAll:()=>[button,password,input],addEventListener:(k,fn)=>listeners[k]=fn};
+const ctx=vm.createContext({document:doc,location:{origin:'https://example.com',href:'https://example.com/'},crypto:webcrypto,URL,getComputedStyle:()=>({visibility:'visible'}),HTMLInputElement:{prototype:inputProto},HTMLTextAreaElement:{prototype:inputProto},Event:class{},window:{scrollBy(){}}});
+vm.runInContext(source,ctx);
+const call=(action,args={})=>ctx.agentPage(action,args);
+let snap=call('snapshot');assert.equal(snap.elements.length,2,'Password excluded');
+assert.equal(call('click',{snapshot:'wrong',ref:'e1'}).status,'error');assert.equal(clicks,0);
+assert.equal(call('describe',{snapshot:snap.snapshot,ref:'e1'}).label,labels);assert.equal(clicks,0,'Describe never actuates');
+labels='刪除全部';assert.equal(call('click',{snapshot:snap.snapshot,ref:'e1'}).status,'error');assert.equal(clicks,0,'Changed target blocked');
+snap=call('snapshot');assert.equal(call('click',{snapshot:snap.snapshot,ref:'e1'}).status,'ok');assert.equal(clicks,1);
+assert.equal(call('click',{snapshot:snap.snapshot,ref:'e1'}).status,'error','Ref invalidated after action');
+snap=call('snapshot');assert.equal(call('type',{snapshot:snap.snapshot,ref:'e2',value:'草稿標題'}).status,'ok');assert.equal(input.value,'草稿標題');
+listeners.pointerdown({isTrusted:true});assert.equal(call('snapshot').status,'human_required');call('enable');assert.equal(call('snapshot').status,'ok');
+button.closest=()=>({href:'https://other.example/',target:'',hasAttribute:()=>false});snap=call('snapshot');assert.equal(call('click',{snapshot:snap.snapshot,ref:'e1'}).status,'human_required');assert.equal(clicks,1);
+console.log('PASS DOM: password exclusion, stale refs, changed controls, type, reference invalidation, trusted human takeover, origin boundary');
+
